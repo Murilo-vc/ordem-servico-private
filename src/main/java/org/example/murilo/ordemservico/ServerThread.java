@@ -1,29 +1,41 @@
 package org.example.murilo.ordemservico;
 
+import org.example.murilo.ordemservico.domain.dto.ClientDto;
 import org.example.murilo.ordemservico.service.OperationService;
 import org.example.murilo.ordemservico.util.StringUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.List;
 
 public class ServerThread implements Runnable {
 
     private final Socket socket;
+    private final List<ClientDto> connectedClients;
     private final OperationService operationService;
 
-    public ServerThread(final Socket socket) {
+    public ServerThread(final Socket socket, final List<ClientDto> connectedClients) {
         this.socket = socket;
+        this.connectedClients = connectedClients;
         this.operationService = new OperationService();
         run();
     }
 
     @Override
     public void run() {
-        try {
-            System.out.println("Nova thread de comunicacao iniciada.\n");
+        final String clientIp = socket.getInetAddress().getHostAddress();
+        final int clientPort = socket.getPort();
+        final ClientDto client = new ClientDto(clientIp, clientPort);
+        connectedClients.add(client);
+        try (
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()))
+        ) {
+            System.out.println("Nova thread de comunicacao iniciada.\n");
 
             this.operationService.checkTables();
 
@@ -41,11 +53,6 @@ public class ServerThread implements Runnable {
                 System.out.println("Servidor enviou: " + outputJson);
                 out.println(outputJson);
             }
-
-            out.close();
-            in.close();
-            this.socket.close();
-
         } catch (IOException e) {
             System.err.println("Problema com Servidor de Communicacao!");
             Thread.currentThread().interrupt();
@@ -53,7 +60,12 @@ public class ServerThread implements Runnable {
             System.err.println("Problema com o Banco de Dados!");
             System.out.println(e.getMessage());
             Thread.currentThread().interrupt();
+        } finally {
+            connectedClients.remove(client);
+            try {
+                this.socket.close();
+            } catch (IOException ignored) {
+            }
         }
-
     }
 }

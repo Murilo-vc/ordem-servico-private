@@ -28,7 +28,7 @@ public class Server {
             System.out.println("Criado Socket de Conexao.");
             try {
                 while (true) {
-                    new ServerThread(serverSocket.accept());
+                    new Thread(new ServerThread(serverSocket.accept(), null)).start();
                     System.out.println("Accept ativado. Esperando por uma conexao...");
                 }
             } catch (IOException e) {

@@ -7,13 +7,13 @@ public class User {
 
     private Integer id;
 
-    private final String username;
+    private String username;
 
-    private final String name;
+    private String name;
 
-    private final String password;
+    private String password;
 
-    private final UserRoleEnum role;
+    private UserRoleEnum role;
 
     public User(final int id,
                 final String username,
@@ -35,6 +35,12 @@ public class User {
         this.name = name;
         this.password = password;
         this.role = role;
+    }
+
+    public User(final String username, final String name, final String password) {
+        this.username = username;
+        this.name = name;
+        this.password = password;
     }
 
     public Integer getId() {
