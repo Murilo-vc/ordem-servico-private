@@ -145,6 +145,11 @@ public class HomeWindow extends JFrame {
             }
         });
         btnUserPage.setBounds(138, 11, 128, 31);
+
+        if (UserRoleEnum.COMUM.equals(this.role)) {
+            btnUserPage.setVisible(false);
+        }
+
         navBarPane.add(btnUserPage);
     }
 }

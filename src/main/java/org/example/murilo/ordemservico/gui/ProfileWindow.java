@@ -203,10 +203,12 @@ public class ProfileWindow extends JFrame {
             this.txtUsername.setFocusable(isEditing);
             this.lblUsernameInstructions.setVisible(isEditing);
         } else {
-            this.txtRole.setVisible(!isEditing);
-            this.separatorRole.setVisible(!isEditing);
-            this.rbComum.setVisible(isEditing);
-            this.rbAdm.setVisible(isEditing);
+            if (!this.user.getUsername().equals(this.token)) {
+                this.txtRole.setVisible(!isEditing);
+                this.separatorRole.setVisible(!isEditing);
+                this.rbComum.setVisible(isEditing);
+                this.rbAdm.setVisible(isEditing);
+            }
         }
         this.separatorName.setVisible(isEditing);
         this.separatorPassword.setVisible(isEditing);
@@ -264,8 +266,23 @@ public class ProfileWindow extends JFrame {
         try {
             if (UserRoleEnum.ADM.equals(this.role)) {
                 this.clientService.deleteUser(this.token, user.getUsername());
+                if (this.homeWindow != null) {
+                    this.homeWindow.setVisible(true);
+                } else {
+                    this.usersWindow.setVisible(true);
+                    this.usersWindow.populateTable();
+                }
+                this.dispose();
             } else {
                 this.clientService.deleteUser(this.user.getUsername());
+                final LoginWindow lw = new LoginWindow(this.clientService);
+                lw.setVisible(true);
+                if (this.homeWindow != null) {
+                    this.homeWindow.dispose();
+                } else {
+                    this.usersWindow.dispose();
+                }
+                this.dispose();
             }
             JOptionPane.showMessageDialog(null, "Conta deletada com sucesso!", "Sucesso!", JOptionPane.INFORMATION_MESSAGE);
             this.openHomeWindow();

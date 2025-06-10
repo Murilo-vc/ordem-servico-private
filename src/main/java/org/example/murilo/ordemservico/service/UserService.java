@@ -196,14 +196,18 @@ public class UserService {
             final User targetUser = new UserRepository(Database.connect()).findOneByUsername(targetUserUsername);
 
             final UserRoleEnum newRole = UserRoleEnum.getById(newRoleString);
+            if (user.getUsername().equals(targetUser.getUsername()) && !user.getRole().equals(newRole)) {
+                throw new BaseException("Os campos recebidos não são validos", OperationEnum.EDITAR_USUARIO);
+            }
+
             if (!StringUtils.isValidPassword(newPassword) ||
                 !StringUtils.isValidName(newName) ||
-                newRole == null ||
-                targetUser == null) {
+                newRole == null) {
                 throw new BaseException("Os campos recebidos não são validos", OperationEnum.EDITAR_USUARIO);
             }
 
             final User updatedUser = new User(targetUser.getId(), targetUser.getUsername(), newName, newPassword, newRole);
+
             new UserRepository(Database.connect()).update(updatedUser);
 
             final BaseResponseDto response = BaseResponseDto.toDto(
@@ -262,8 +266,7 @@ public class UserService {
                 throw new InvalidTokenException(OperationEnum.EXCLUIR_USUARIO);
             }
 
-            final User targetUser = new UserRepository(Database.connect()).findOneByUsername(token);
-
+            final User targetUser = new UserRepository(Database.connect()).findOneByUsername(targetUserUsername);
             if (targetUser == null) {
                 throw new InvalidTokenException(OperationEnum.EXCLUIR_USUARIO);
             }
