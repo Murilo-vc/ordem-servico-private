@@ -16,20 +16,20 @@ src/main/java/org/example/murilo/ordemservico/DatabaseSetup
 
 ### Iniciar um servidor
 
-Para iniciar um servidor acesse e execute o método main da classe Servidor.java
+Para iniciar um servidor acesse e execute o método main da classe ServerWindow.java
 
 Localizada em:
-src/main/java/org/example/murilo/ordemservico/Server.java
+src/main/java/org/example/murilo/ordemservico/ServerWindow.java
 
 Após acionar o método informe a porta que o servidor deverá usar
 
 ### Iniciar um cliente
 
-Para iniciar um cliente acesse e execute o método main da classe Client.java
+Para iniciar um cliente acesse e execute o método main da classe ClientWindow.java
 
 Localizada em:
-src/main/java/org/example/murilo/ordemservico/Server.java
+src/main/java/org/example/murilo/ordemservico/ClientWindow.java
 
 Após acionar o método informe o IP do sevidor e a porta que o servidor está usando
 
-E então acompanhe as operações através do console.
+E então acompanhe as operações através da interface grafica criada.
