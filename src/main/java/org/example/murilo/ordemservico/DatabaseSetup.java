@@ -7,11 +7,11 @@ import java.sql.SQLException;
 
 public class DatabaseSetup {
 
-    private static void createTables() throws SQLException {
+    public static void createTables() throws SQLException {
         new UserRepository(Database.connect()).createUserTable();
     }
 
-    private static void insertInitialData() throws SQLException {
+    public static void insertInitialData() throws SQLException {
         new UserRepository(Database.connect()).insertUserDefaultData();
     }
 

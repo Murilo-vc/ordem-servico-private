@@ -1,5 +1,7 @@
 package org.example.murilo.ordemservico.service;
 
+import com.google.gson.JsonSyntaxException;
+import org.example.murilo.ordemservico.DatabaseSetup;
 import org.example.murilo.ordemservico.domain.dto.ErrorDto;
 import org.example.murilo.ordemservico.domain.payload.*;
 import org.example.murilo.ordemservico.enumeration.OperationEnum;
@@ -17,7 +19,8 @@ public class OperationService {
     }
 
     public void checkTables() throws SQLException {
-        this.userService.createUserTable();
+        DatabaseSetup.createTables();
+        DatabaseSetup.insertInitialData();
     }
 
     public String processRequest(final String inputJson) throws SQLException {
@@ -39,6 +42,9 @@ public class OperationService {
             ErrorDto.toDto(e);
             final ErrorDto error = ErrorDto.toDto(e);
             return JsonUtils.getErrorJson(error);
+        } catch (JsonSyntaxException e) {
+            System.err.println("Error on parsing JSON");
+            return "";
         }
     }
 
@@ -62,6 +68,9 @@ public class OperationService {
         } else if (OperationEnum.EXCLUIR_USUARIO.equals(operation)) {
             final DeleteUserPayload deleteUserPayload = JsonUtils.parseDeleteUserPayload(inputJson);
             return this.userService.deleteUser(deleteUserPayload);
+        } else if (OperationEnum.LISTAR_USUARIOS.equals(operation)) {
+            final UserListPayload userListPayload = JsonUtils.parseUserListPayload(inputJson);
+            return this.userService.findAllUsers(userListPayload);
         }
 
         return null;

@@ -19,9 +19,10 @@ import java.awt.event.FocusListener;
 public class ProfileWindow extends JFrame {
 
     private static final long serialVersionUID = 1L;
-    private final HomeWindow homeWindow;
     private final ClientService clientService;
     private final UserRoleEnum role;
+    private HomeWindow homeWindow;
+    private UsersWindow usersWindow;
     private String token;
     private User user;
     private JPanel contentPane;
@@ -43,9 +44,16 @@ public class ProfileWindow extends JFrame {
     private JCheckBox chckbxShowPassword;
     private JButton btnCancelChanges;
     private JButton btnDeleteAccount;
+    private JLabel lblRole;
+    private JTextField txtRole;
+    private JSeparator separatorRole;
+    private ButtonGroup btnGroupRole;
+    private JRadioButton rbAdm;
+    private JRadioButton rbComum;
 
-    public ProfileWindow(final HomeWindow homeWindow, final ClientService clientService, final String token, final UserRoleEnum role, final User user) {
+    public ProfileWindow(final HomeWindow homeWindow, final UsersWindow usersWindow, final ClientService clientService, final String token, final UserRoleEnum role, final User user) {
         this.homeWindow = homeWindow;
+        this.usersWindow = usersWindow;
         this.clientService = clientService;
         this.token = token;
         this.role = role;
@@ -61,8 +69,9 @@ public class ProfileWindow extends JFrame {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    final User user = new User("User", "username", "pass");
-                    ProfileWindow frame = new ProfileWindow(null, null, "username", UserRoleEnum.ADM, user);
+                    final User user = new User("User", "username", "pass", UserRoleEnum.COMUM);
+                    final HomeWindow hw = null;
+                    ProfileWindow frame = new ProfileWindow(hw, null, null, "username", UserRoleEnum.ADM, user);
                     frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -140,6 +149,14 @@ public class ProfileWindow extends JFrame {
         return true;
     }
 
+    private UserRoleEnum getSelectedRole() {
+        if (this.rbComum.isSelected()) {
+            return UserRoleEnum.COMUM;
+        }
+        return UserRoleEnum.ADM;
+
+    }
+
     private void saveChanges() {
         if (!this.validateName() | !this.validateUsername() | !this.validatePassword()) {
             return;
@@ -150,33 +167,54 @@ public class ProfileWindow extends JFrame {
         final String newPassword = new String(this.passwordField.getPassword());
 
         try {
+            if (UserRoleEnum.ADM.equals(this.role)) {
+                final UserRoleEnum newRole = this.getSelectedRole();
+                this.clientService.updateUser(token, this.user.getUsername(), newName, newPassword, newRole);
+                JOptionPane.showMessageDialog(null, "Usuario atualizado com sucesso!", "Sucesso!", JOptionPane.INFORMATION_MESSAGE);
+                this.txtRole.setText(newRole.getId());
+                this.toggleEditMode(false);
+                return;
+            }
+	        
             final UpdateUserDto updatedUser = this.clientService.updateSelf(this.token, newUsername, newName, newPassword);
 
             if (this.token.equals(this.user.getUsername()) && !this.token.equals(updatedUser.getToken())) {
                 this.token = updatedUser.getToken();
+                if (this.homeWindow != null) {
+                    this.homeWindow.setToken(updatedUser.getToken());
+                } else {
+                    this.usersWindow.setToken(updatedUser.getToken());
+                }
             }
 
-            this.user = new User(newUsername, newName, newPassword);
+            this.user = new User(newUsername, newName, newPassword, this.role);
             this.loadUserInfo();
             this.toggleEditMode(false);
         } catch (BaseException e) {
-            JOptionPane.showMessageDialog(null, "Um erro ocorreu durante a leitura do perfil: \n" + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Um erro ocorreu durante a atualizacao do perfil: \n" + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             System.err.println("Um erro ocorreu: " + e.getMessage());
         }
     }
 
     private void toggleEditMode(final boolean isEditing) {
+        if (!UserRoleEnum.ADM.equals(this.role)) {
+            this.separatorUsername.setVisible(isEditing);
+            this.txtUsername.setEditable(isEditing);
+            this.txtUsername.setFocusable(isEditing);
+            this.lblUsernameInstructions.setVisible(isEditing);
+        } else {
+            this.txtRole.setVisible(!isEditing);
+            this.separatorRole.setVisible(!isEditing);
+            this.rbComum.setVisible(isEditing);
+            this.rbAdm.setVisible(isEditing);
+        }
         this.separatorName.setVisible(isEditing);
-        this.separatorUsername.setVisible(isEditing);
         this.separatorPassword.setVisible(isEditing);
         this.txtName.setFocusable(isEditing);
         this.txtName.setEditable(isEditing);
-        this.txtUsername.setEditable(isEditing);
-        this.txtUsername.setFocusable(isEditing);
         this.passwordField.setEditable(isEditing);
         this.passwordField.setFocusable(isEditing);
         this.lblNameInstructions.setVisible(isEditing);
-        this.lblUsernameInstructions.setVisible(isEditing);
         this.lblPasswordInstructions.setVisible(isEditing);
         this.btnEditProfile.setEnabled(!isEditing);
         this.btnEditProfile.setVisible(!isEditing);
@@ -191,20 +229,46 @@ public class ProfileWindow extends JFrame {
         final String name = this.user.getName();
         final String username = this.user.getUsername();
         final String password = this.user.getPassword();
+        final UserRoleEnum role = this.user.getRole();
 
         this.txtName.setText(name);
         this.txtUsername.setText(username);
         this.passwordField.setText(password);
+        this.txtRole.setText(role.getId());
+        if (UserRoleEnum.COMUM.equals(role)) {
+            this.rbComum.setSelected(true);
+        } else {
+            this.rbAdm.setSelected(true);
+        }
     }
 
     private void openHomeWindow() {
-        this.homeWindow.setVisible(true);
+        if (this.homeWindow != null) {
+            this.homeWindow.setVisible(true);
+        } else if (this.usersWindow != null) {
+            this.usersWindow.setVisible(true);
+            this.usersWindow.populateTable();
+        }
         this.dispose();
+    }
+
+    private void showPassword(final JCheckBox source, final JPasswordField txt) {
+        if (source.isSelected()) {
+            txt.setEchoChar((char) 0);
+        } else {
+            txt.setEchoChar('●');
+        }
     }
 
     private void deleteAccount() {
         try {
-            this.clientService.deleteUser(this.user.getUsername());
+            if (UserRoleEnum.ADM.equals(this.role)) {
+                this.clientService.deleteUser(this.token, user.getUsername());
+            } else {
+                this.clientService.deleteUser(this.user.getUsername());
+            }
+            JOptionPane.showMessageDialog(null, "Conta deletada com sucesso!", "Sucesso!", JOptionPane.INFORMATION_MESSAGE);
+            this.openHomeWindow();
         } catch (BaseException e) {
             JOptionPane.showMessageDialog(null, "Um erro ocorreu durante a operação: \n" + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             System.err.println("Um erro ocorreu: " + e.getMessage());
@@ -364,6 +428,11 @@ public class ProfileWindow extends JFrame {
         chckbxShowPassword.setForeground(new Color(224, 224, 224));
         chckbxShowPassword.setBackground(new Color(18, 18, 18));
         chckbxShowPassword.setBounds(190, 283, 109, 23);
+        chckbxShowPassword.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                showPassword(chckbxShowPassword, passwordField);
+            }
+        });
         chckbxShowPassword.setVisible(false);
         contentPane.add(chckbxShowPassword);
 
@@ -397,6 +466,48 @@ public class ProfileWindow extends JFrame {
         btnVoltar.setFocusable(false);
         contentPane.add(btnVoltar);
 
+        lblRole = new JLabel("Perfil:");
+        lblRole.setHorizontalAlignment(SwingConstants.TRAILING);
+        lblRole.setForeground(new Color(224, 224, 224));
+        lblRole.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        lblRole.setBounds(10, 368, 170, 25);
+        contentPane.add(lblRole);
+
+        txtRole = new JTextField();
+        txtRole.setForeground(new Color(176, 176, 176));
+        txtRole.setFocusable(false);
+        txtRole.setEditable(false);
+        txtRole.setColumns(10);
+        txtRole.setBorder(null);
+        txtRole.setBackground(new Color(18, 18, 18));
+        txtRole.setBounds(190, 368, 175, 20);
+        contentPane.add(txtRole);
+
+        separatorRole = new JSeparator();
+        separatorRole.setForeground(new Color(136, 136, 136));
+        separatorRole.setBackground(new Color(136, 136, 136));
+        separatorRole.setBounds(190, 276, 175, 8);
+        separatorRole.setVisible(false);
+        contentPane.add(separatorRole);
+
+        rbComum = new JRadioButton("Comum");
+        rbComum.setBounds(190, 368, 109, 23);
+        rbComum.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
+        rbComum.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
+        rbComum.setVisible(false);
+        contentPane.add(rbComum);
+
+        rbAdm = new JRadioButton("ADM");
+        rbAdm.setVisible(false);
+        rbAdm.setBounds(318, 368, 109, 23);
+        rbAdm.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
+        rbAdm.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
+        contentPane.add(rbAdm);
+
+        this.btnGroupRole = new ButtonGroup();
+        btnGroupRole.add(rbComum);
+        btnGroupRole.add(rbAdm);
+
         final boolean hasPermission = this.token.equals(this.user.getUsername()) || UserRoleEnum.ADM.equals(this.role);
 
         if (hasPermission) {
@@ -406,7 +517,7 @@ public class ProfileWindow extends JFrame {
                     toggleEditMode(true);
                 }
             });
-            btnEditProfile.setBounds(324, 371, 89, 23);
+            btnEditProfile.setBounds(324, 430, 89, 23);
             btnEditProfile.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             btnEditProfile.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
             btnEditProfile.setFocusable(false);
@@ -418,7 +529,7 @@ public class ProfileWindow extends JFrame {
                     saveChanges();
                 }
             });
-            btnSaveChanges.setBounds(416, 371, 144, 23);
+            btnSaveChanges.setBounds(416, 430, 144, 23);
             btnSaveChanges.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             btnSaveChanges.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
             btnSaveChanges.setFocusable(false);
@@ -446,7 +557,7 @@ public class ProfileWindow extends JFrame {
                     toggleEditMode(false);
                 }
             });
-            btnCancelChanges.setBounds(317, 371, 89, 23);
+            btnCancelChanges.setBounds(317, 430, 89, 23);
             btnCancelChanges.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             btnCancelChanges.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
             btnCancelChanges.setFocusable(false);
@@ -455,5 +566,4 @@ public class ProfileWindow extends JFrame {
             contentPane.add(btnCancelChanges);
         }
     }
-
 }

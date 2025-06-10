@@ -6,6 +6,8 @@ public final class ErrorMessages {
 
     public static final String LOGIN_INVALID_FIELDS = "Informações incorretas";
 
+    public static final String NO_USERS_FOUND = "Nenhum usuario cadastrado";
+
     public static final String OPERATION_MISSING = "";
 
     public static final String SIGN_UP_INVALID_FIELDS = "Os campos recebidos não são validos";

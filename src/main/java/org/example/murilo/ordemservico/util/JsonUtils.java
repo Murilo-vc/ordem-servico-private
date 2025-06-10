@@ -41,6 +41,11 @@ public final class JsonUtils {
         return gson.fromJson(jsonString, DeleteUserPayload.class);
     }
 
+    public static UserListPayload parseUserListPayload(final String jsonString) {
+        final Gson gson = new Gson();
+        return gson.fromJson(jsonString, UserListPayload.class);
+    }
+
     public static String getErrorJson(final ErrorDto error) {
         return new Gson().toJson(error);
     }

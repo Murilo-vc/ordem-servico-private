@@ -1,5 +1,7 @@
 package org.example.murilo.ordemservico.domain.dto;
 
+import org.example.murilo.ordemservico.enumeration.OperationEnum;
+
 public class BaseResponseDto {
 
     private final String status;
@@ -14,6 +16,12 @@ public class BaseResponseDto {
         this.status = status;
         this.operacao = operacao;
         this.mensagem = mensagem;
+    }
+
+    public static BaseResponseDto toDto(final String status,
+                                        final OperationEnum operation,
+                                        final String message) {
+        return new BaseResponseDto(status, operation.getId(), message);
     }
 
     public String getStatus() {

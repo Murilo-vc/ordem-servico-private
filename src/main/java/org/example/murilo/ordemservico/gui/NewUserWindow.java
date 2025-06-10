@@ -1,6 +1,7 @@
 package org.example.murilo.ordemservico.gui;
 
 import org.example.murilo.ordemservico.domain.constants.ColorCodes;
+import org.example.murilo.ordemservico.enumeration.UserRoleEnum;
 import org.example.murilo.ordemservico.handler.exception.BaseException;
 import org.example.murilo.ordemservico.service.ClientService;
 import org.example.murilo.ordemservico.util.StringUtils;
@@ -8,23 +9,34 @@ import org.example.murilo.ordemservico.util.StringUtils;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
-public class SignUpWindow extends JFrame {
+public class NewUserWindow extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private ClientService clientService;
+    private UsersWindow usersWindow;
+    private String token;
     private JPanel contentPane;
     private JTextField txtName;
     private JTextField txtUsername;
     private JPasswordField passwordField;
     private JCheckBox chckbxShowPassword;
+    private ButtonGroup btnGroupRole;
+    private JRadioButton rbAdm;
+    private JRadioButton rbComum;
     private JLabel lblNameErrorMessage;
     private JLabel lblUsernameErrorMessage;
     private JLabel lblPasswordErrorMessage;
+    private JButton btnVoltar;
 
-    public SignUpWindow(final ClientService clientService) {
+    public NewUserWindow(final ClientService clientService, final UsersWindow usersWindow, final String token) {
         this.clientService = clientService;
+        this.usersWindow = usersWindow;
+        this.token = token;
         this.initComponents();
     }
 
@@ -35,11 +47,7 @@ public class SignUpWindow extends JFrame {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-//                    final String ip = "";
-//                    final int port = 123;
-//                    final ClientService cs = new ClientService();
-//                    cs.connectServer(ip, port);
-                    SignUpWindow frame = new SignUpWindow(null);
+                    NewUserWindow frame = new NewUserWindow(null, null, null);
                     frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -48,18 +56,17 @@ public class SignUpWindow extends JFrame {
         });
     }
 
+    public void openUsersWindow() {
+        this.usersWindow.setVisible(true);
+        this.dispose();
+    }
+
     private void showPassword(final JCheckBox source, final JPasswordField txt) {
         if (source.isSelected()) {
             txt.setEchoChar((char) 0);
         } else {
             txt.setEchoChar('●');
         }
-    }
-
-    private void openLoginWindow() {
-        final LoginWindow lw = new LoginWindow(this.clientService);
-        lw.setVisible(true);
-        this.dispose();
     }
 
     private boolean validateName() {
@@ -131,7 +138,15 @@ public class SignUpWindow extends JFrame {
         return true;
     }
 
-    private void signUp() {
+    private UserRoleEnum getSelectedRole() {
+        if (this.rbComum.isSelected()) {
+            return UserRoleEnum.COMUM;
+        }
+        return UserRoleEnum.ADM;
+
+    }
+
+    private void createUser() {
         if (!this.validateName() | !this.validateUsername() | !this.validatePassword()) {
             return;
         }
@@ -139,12 +154,16 @@ public class SignUpWindow extends JFrame {
         final String name = this.txtName.getText();
         final String username = this.txtUsername.getText();
         final String password = new String(this.passwordField.getPassword());
+        final UserRoleEnum role = this.getSelectedRole();
 
         try {
-            this.clientService.signUp(name, username, password);
-            JOptionPane.showMessageDialog(null, "Cadastro realizado com sucesso!", "Sucesso!", JOptionPane.INFORMATION_MESSAGE);
+            this.clientService.createUser(this.token, name, username, password, role);
+            JOptionPane.showMessageDialog(null, "Usuario criado com sucesso!", "Sucesso!", JOptionPane.INFORMATION_MESSAGE);
+            this.usersWindow.populateTable();
+            this.usersWindow.setVisible(true);
+            this.dispose();
         } catch (BaseException e) {
-            JOptionPane.showMessageDialog(null, "Um erro ocorreu durante o cadastro: \n" + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Um erro ocorreu durante a criacao: \n" + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             System.err.println("Um erro ocorreu: " + e.getMessage());
         }
     }
@@ -153,7 +172,7 @@ public class SignUpWindow extends JFrame {
      * Create the frame.
      */
     public void initComponents() {
-        setBounds(100, 100, 642, 510);
+        setBounds(100, 100, 642, 570);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         contentPane = new JPanel();
@@ -190,6 +209,13 @@ public class SignUpWindow extends JFrame {
         lblUsername.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
         lblUsername.setBounds(45, 168, 170, 25);
         contentPane.add(lblUsername);
+
+        JLabel lblRole = new JLabel("Perfil:");
+        lblRole.setHorizontalAlignment(SwingConstants.TRAILING);
+        lblRole.setForeground(new Color(224, 224, 224));
+        lblRole.setFont(new Font("Tahoma", Font.PLAIN, 16));
+        lblRole.setBounds(45, 368, 170, 25);
+        contentPane.add(lblRole);
 
         txtName = new JTextField();
         txtName.setBounds(225, 80, 175, 20);
@@ -250,36 +276,53 @@ public class SignUpWindow extends JFrame {
             }
         });
 
-        JButton btnSignUp = new JButton("Cadastrar");
+        rbComum = new JRadioButton("Comum");
+        rbComum.setBounds(225, 368, 109, 23);
+        rbComum.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
+        rbComum.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
+        rbComum.setSelected(true);
+        contentPane.add(rbComum);
+
+        rbAdm = new JRadioButton("ADM");
+        rbAdm.setBounds(353, 368, 109, 23);
+        rbAdm.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
+        rbAdm.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
+        contentPane.add(rbAdm);
+
+        this.btnGroupRole = new ButtonGroup();
+        btnGroupRole.add(rbComum);
+        btnGroupRole.add(rbAdm);
+
+        JButton btnSignUp = new JButton("Criar");
         btnSignUp.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                signUp();
+                createUser();
             }
         });
-        btnSignUp.setBounds(245, 354, 136, 36);
+        btnSignUp.setBounds(245, 424, 136, 36);
         btnSignUp.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
         btnSignUp.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
         btnSignUp.setFont(new Font("Tahoma", Font.BOLD, 16));
         btnSignUp.setEnabled(true);
         contentPane.add(btnSignUp);
 
-        JSeparator separator = new JSeparator();
-        separator.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
-        separator.setForeground(Color.decode(ColorCodes.ACCENT_COLOR));
-        separator.setBounds(225, 99, 175, 8);
-        contentPane.add(separator);
+        JSeparator separatorName = new JSeparator();
+        separatorName.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
+        separatorName.setForeground(Color.decode(ColorCodes.ACCENT_COLOR));
+        separatorName.setBounds(225, 99, 175, 8);
+        contentPane.add(separatorName);
 
-        JSeparator separator_1 = new JSeparator();
-        separator_1.setForeground(new Color(136, 136, 136));
-        separator_1.setBackground(new Color(136, 136, 136));
-        separator_1.setBounds(225, 192, 175, 8);
-        contentPane.add(separator_1);
+        JSeparator separatorUsername = new JSeparator();
+        separatorUsername.setForeground(new Color(136, 136, 136));
+        separatorUsername.setBackground(new Color(136, 136, 136));
+        separatorUsername.setBounds(225, 192, 175, 8);
+        contentPane.add(separatorUsername);
 
-        JSeparator separator_2 = new JSeparator();
-        separator_2.setForeground(new Color(136, 136, 136));
-        separator_2.setBackground(new Color(136, 136, 136));
-        separator_2.setBounds(225, 279, 175, 8);
-        contentPane.add(separator_2);
+        JSeparator separatorPassword = new JSeparator();
+        separatorPassword.setForeground(new Color(136, 136, 136));
+        separatorPassword.setBackground(new Color(136, 136, 136));
+        separatorPassword.setBounds(225, 279, 175, 8);
+        contentPane.add(separatorPassword);
 
         JLabel lblNameInstructions = new JLabel("<html><p align='justify'>Nome deve ter entre 3 e 30 caracteres, NÃO deve conter espaço vazio e NÃO deve conter caracteres especiais</p></html>");
         lblNameInstructions.setFont(new Font("Tahoma", Font.PLAIN, 11));
@@ -310,19 +353,6 @@ public class SignUpWindow extends JFrame {
         chckbxShowPassword.setBounds(225, 286, 109, 23);
         contentPane.add(chckbxShowPassword);
 
-        JLabel lblAlreadyHaveAccount = new JLabel("<html><p align='justify'>Ja possui uma conta? Entrar</p></html>");
-        lblAlreadyHaveAccount.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                openLoginWindow();
-            }
-        });
-        lblAlreadyHaveAccount.setBounds(220, 410, 186, 25);
-        lblAlreadyHaveAccount.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
-        lblAlreadyHaveAccount.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblAlreadyHaveAccount.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        contentPane.add(lblAlreadyHaveAccount);
-
         lblNameErrorMessage = new JLabel("");
         lblNameErrorMessage.setForeground(Color.decode(ColorCodes.ERROR_MESSAGE_COLOR));
         lblNameErrorMessage.setFont(new Font("Tahoma", Font.PLAIN, 11));
@@ -340,5 +370,18 @@ public class SignUpWindow extends JFrame {
         lblPasswordErrorMessage.setFont(new Font("Tahoma", Font.PLAIN, 11));
         lblPasswordErrorMessage.setBounds(410, 249, 201, 36);
         contentPane.add(lblPasswordErrorMessage);
+
+        btnVoltar = new JButton("<html><p align='justify'>Voltar</p></html>");
+        btnVoltar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                openUsersWindow();
+            }
+        });
+        btnVoltar.setBounds(10, 11, 89, 23);
+        btnVoltar.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
+        btnVoltar.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
+        btnVoltar.setFocusable(false);
+        contentPane.add(btnVoltar);
     }
+
 }

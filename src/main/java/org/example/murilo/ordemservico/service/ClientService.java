@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.List;
 
 public class ClientService {
 
@@ -61,6 +62,50 @@ public class ClientService {
 
             if (ResponseStatusEnum.SUCESSO.equals(status)) {
                 System.out.println("Cadastro concluido com sucesso!");
+            } else {
+                final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+                String message = error.getMensagem();
+
+                if (StringUtils.isEmpty(message)) {
+                    message = "Um erro não mapeado ocorreu durante a operação!";
+                }
+
+                throw new BaseException(message, OperationEnum.CADASTRO);
+            }
+            return;
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.CADASTRO);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.CADASTRO);
+        }
+    }
+
+    public void createUser(final String token, final String name, final String username, final String password, final UserRoleEnum role) throws BaseException {
+        try {
+            if (!StringUtils.isValidName(name) || !StringUtils.isValidUsername(username) || !StringUtils.isValidPassword(password) || role == null) {
+                return;
+            }
+
+            final SignUpPayload signUpPayload = new SignUpPayload(
+                name, username, password, role.getId(), token
+            );
+
+            final String payloadJson = new Gson().toJson(signUpPayload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia", OperationEnum.CADASTRO);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.SUCESSO.equals(status)) {
+                System.out.println("Usuario criado com sucesso!");
             } else {
                 final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
                 String message = error.getMensagem();
@@ -157,6 +202,44 @@ public class ClientService {
             throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.LOGOUT);
         } catch (IOException e) {
             throw new BaseException(e.getMessage(), OperationEnum.LOGOUT);
+        }
+    }
+
+    public List<SmallUserDto> findAllUsers(final String token) throws BaseException {
+        try {
+            final UserListPayload payload = new UserListPayload(token);
+
+            final String payloadJson = new Gson().toJson(payload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia!", OperationEnum.LISTAR_USUARIOS);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.ERRO.equals(status)) {
+                final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+                String message = error.getMensagem();
+
+                if (StringUtils.isEmpty(message)) {
+                    message = "Um erro não mapeado ocorreu durante a operação!";
+                }
+
+                throw new BaseException(message, OperationEnum.LISTAR_USUARIOS);
+            }
+
+            final UserListDto userListDto = new Gson().fromJson(responseJson, UserListDto.class);
+            return userListDto.getUsuarios();
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.LISTAR_USUARIOS);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.LISTAR_USUARIOS);
         }
     }
 
@@ -263,9 +346,86 @@ public class ClientService {
         }
     }
 
+    public void updateUser(final String token, final String targetUser, final String newName, final String newPassword, final UserRoleEnum newRole) throws BaseException {
+        try {
+            final UpdateUserPayload updateUserPayload = new UpdateUserPayload(
+                token,
+                targetUser,
+                newName,
+                newPassword,
+                newRole.getId()
+            );
+
+            final String payloadJson = new Gson().toJson(updateUserPayload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia!", OperationEnum.EDITAR_USUARIO);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.ERRO.equals(status)) {
+                final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+                String message = error.getMensagem();
+
+                if (StringUtils.isEmpty(message)) {
+                    message = "Um erro não mapeado ocorreu durante a operação.";
+                }
+
+                throw new BaseException(message, OperationEnum.EDITAR_USUARIO);
+            }
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.EDITAR_USUARIO);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.EDITAR_USUARIO);
+        }
+    }
+
     public void deleteUser(final String token) throws BaseException {
         try {
             final DeleteUserPayload deleteUserPayload = new DeleteUserPayload(token);
+
+            final String payloadJson = new Gson().toJson(deleteUserPayload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Um erro ocorreu durante a operação. Tente novamente!", OperationEnum.EXCLUIR_USUARIO);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.ERRO.equals(status)) {
+                final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+                String message = error.getMensagem();
+
+                if (StringUtils.isEmpty(message)) {
+                    message = "Um erro não mapeado ocorreu durante a operação!";
+                }
+
+                System.out.println(message);
+                throw new BaseException(message, OperationEnum.EXCLUIR_USUARIO);
+            }
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.EXCLUIR_USUARIO);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.EXCLUIR_USUARIO);
+        }
+    }
+
+    public void deleteUser(final String token, final String targetUser) throws BaseException {
+        try {
+            final DeleteUserPayload deleteUserPayload = new DeleteUserPayload(token, targetUser);
 
             final String payloadJson = new Gson().toJson(deleteUserPayload);
             System.out.println("Cliente enviou: " + payloadJson);

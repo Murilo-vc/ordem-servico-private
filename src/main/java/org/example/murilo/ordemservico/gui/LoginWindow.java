@@ -34,11 +34,11 @@ public class LoginWindow extends JFrame {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    final String ip = "";
-                    final int port = 123;
-                    final ClientService cs = new ClientService();
-                    cs.connectServer(ip, port);
-                    LoginWindow frame = new LoginWindow(cs);
+//                    final String ip = "";
+//                    final int port = 123;
+//                    final ClientService cs = new ClientService();
+//                    cs.connectServer(ip, port);
+                    LoginWindow frame = new LoginWindow(null);
                     frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();

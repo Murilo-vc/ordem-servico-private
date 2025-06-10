@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserRepository {
 
@@ -79,6 +81,33 @@ public class UserRepository {
         }
     }
 
+    public List<User> findAllUsers() throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
+
+        try {
+            st = conn.prepareStatement("SELECT * FROM user");
+            rs = st.executeQuery();
+
+            final List<User> users = new ArrayList<>();
+            while (rs.next()) {
+                final User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("name"),
+                    rs.getString("password"),
+                    UserRoleEnum.getById(rs.getString("role").toLowerCase())
+                );
+                users.add(user);
+            }
+            return users;
+        } finally {
+            Database.closeStatement(st);
+            Database.closeResultSet(rs);
+            Database.disconnect();
+        }
+    }
+
     public boolean existsByUsername(final String username) throws SQLException {
         PreparedStatement st = null;
         ResultSet rs = null;
@@ -119,12 +148,13 @@ public class UserRepository {
         PreparedStatement st = null;
 
         try {
-            st = conn.prepareStatement("UPDATE user SET username = ?, name = ?, password = ? WHERE id = ?");
+            st = conn.prepareStatement("UPDATE user SET username = ?, name = ?, password = ?, role = ? WHERE id = ?");
 
             st.setString(1, user.getUsername());
             st.setString(2, user.getName());
             st.setString(3, user.getPassword());
-            st.setInt(4, user.getId());
+            st.setString(4, user.getRole().toString());
+            st.setInt(5, user.getId());
 
             st.executeUpdate();
         } finally {
