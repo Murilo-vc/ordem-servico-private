@@ -24,7 +24,6 @@ public class OperationService {
 
     public void checkTables() throws SQLException {
         DatabaseSetup.createTables();
-        DatabaseSetup.insertInitialData();
     }
 
     public String processRequest(final String inputJson) throws SQLException {
