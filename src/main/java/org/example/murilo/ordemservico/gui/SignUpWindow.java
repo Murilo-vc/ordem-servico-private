@@ -201,12 +201,14 @@ public class SignUpWindow extends JFrame {
         txtName.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
+                txtName.setForeground(Color.BLACK);
                 txtName.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 validateName();
+                txtName.setForeground(Color.decode(ColorCodes.SECONDARY_TEXT_COLOR));
                 txtName.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
             }
         });
@@ -221,12 +223,14 @@ public class SignUpWindow extends JFrame {
         txtUsername.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
+                txtUsername.setForeground(Color.BLACK);
                 txtUsername.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 validateUsername();
+                txtUsername.setForeground(Color.decode(ColorCodes.SECONDARY_TEXT_COLOR));
                 txtUsername.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
             }
         });
@@ -240,12 +244,14 @@ public class SignUpWindow extends JFrame {
         passwordField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
+                passwordField.setForeground(Color.BLACK);
                 passwordField.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 validatePassword();
+                passwordField.setForeground(Color.decode(ColorCodes.SECONDARY_TEXT_COLOR));
                 passwordField.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
             }
         });

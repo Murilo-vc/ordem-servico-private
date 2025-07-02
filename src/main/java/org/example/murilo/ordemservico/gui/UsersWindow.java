@@ -7,7 +7,7 @@ import org.example.murilo.ordemservico.domain.dto.SmallUserDto;
 import org.example.murilo.ordemservico.domain.entity.User;
 import org.example.murilo.ordemservico.enumeration.UserRoleEnum;
 import org.example.murilo.ordemservico.handler.exception.BaseException;
-import org.example.murilo.ordemservico.handler.exception.UserNotFoundException;
+import org.example.murilo.ordemservico.handler.exception.UserNotFoundOnTableException;
 import org.example.murilo.ordemservico.service.ClientService;
 import org.example.murilo.ordemservico.util.StringUtils;
 
@@ -118,11 +118,11 @@ public class UsersWindow extends JFrame {
         });
     }
 
-    private SmallUserDto getSelectedUser() throws UserNotFoundException {
+    private SmallUserDto getSelectedUser() throws UserNotFoundOnTableException {
         final String username = this.txtUsername.getText();
 
         if (StringUtils.isEmpty(username)) {
-            throw new UserNotFoundException();
+            throw new UserNotFoundOnTableException();
         }
 
         for (SmallUserDto u : this.users) {
@@ -131,7 +131,7 @@ public class UsersWindow extends JFrame {
             }
         }
 
-        throw new UserNotFoundException();
+        throw new UserNotFoundOnTableException();
     }
 
     private void updateUser() {
@@ -141,7 +141,7 @@ public class UsersWindow extends JFrame {
             final ProfileWindow pw = new ProfileWindow(null, this, this.clientService, this.token, this.role, user);
             pw.setVisible(true);
             this.setVisible(false);
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundOnTableException e) {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             System.err.println(e.getMessage());
         }
@@ -155,7 +155,7 @@ public class UsersWindow extends JFrame {
         } catch (BaseException e) {
             JOptionPane.showMessageDialog(null, "Um erro ocorreu durante a exclusao: \n" + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             System.err.println("Um erro ocorreu: " + e.getMessage());
-        } catch (UserNotFoundException e) {
+        } catch (UserNotFoundOnTableException e) {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             System.err.println(e.getMessage());
         }
@@ -272,11 +272,13 @@ public class UsersWindow extends JFrame {
         txtUsername.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
+                txtUsername.setForeground(Color.BLACK);
                 txtUsername.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
+                txtUsername.setForeground(Color.decode(ColorCodes.PRIMARY_TEXT_COLOR));
                 txtUsername.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
             }
         });

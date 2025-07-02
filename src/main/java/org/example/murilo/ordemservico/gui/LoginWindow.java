@@ -151,12 +151,14 @@ public class LoginWindow extends JFrame {
         txtUsername.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
+                txtUsername.setForeground(Color.BLACK);
                 txtUsername.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 validateUsername();
+                txtUsername.setForeground(Color.decode(ColorCodes.SECONDARY_TEXT_COLOR));
                 txtUsername.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
             }
         });
@@ -185,12 +187,14 @@ public class LoginWindow extends JFrame {
         passwordField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
+                passwordField.setForeground(Color.BLACK);
                 passwordField.setBackground(Color.decode(ColorCodes.ACCENT_COLOR));
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 validatePassword();
+                passwordField.setForeground(Color.decode(ColorCodes.SECONDARY_TEXT_COLOR));
                 passwordField.setBackground(Color.decode(ColorCodes.BACKGROUND_COLOR));
             }
         });

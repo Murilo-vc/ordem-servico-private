@@ -8,7 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserRepository {
 
@@ -87,6 +89,36 @@ public class UserRepository {
 
         try {
             st = conn.prepareStatement("SELECT * FROM user");
+            rs = st.executeQuery();
+
+            final List<User> users = new ArrayList<>();
+            while (rs.next()) {
+                final User user = new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("name"),
+                    rs.getString("password"),
+                    UserRoleEnum.getById(rs.getString("role").toLowerCase())
+                );
+                users.add(user);
+            }
+            return users;
+        } finally {
+            Database.closeStatement(st);
+            Database.closeResultSet(rs);
+            Database.disconnect();
+        }
+    }
+
+    public List<User> findAllByIds(final Collection<Integer> ids) throws SQLException {
+        PreparedStatement st = null;
+        ResultSet rs = null;
+
+        try {
+            st = conn.prepareStatement("""
+                SELECT *
+                  FROM user u
+                 WHERE u.id IN (""" + ids.parallelStream().map(id -> "'" + id + "'").collect(Collectors.joining(", ")) + ")");
             rs = st.executeQuery();
 
             final List<User> users = new ArrayList<>();

@@ -74,4 +74,16 @@ public final class StringUtils {
 
         return true;
     }
+
+    public static boolean isValidDescription(final String description) {
+        if (StringUtils.isEmpty(description)) {
+            return false;
+        }
+
+        if (description.length() < 3 || description.length() > 150) {
+            return false;
+        }
+
+        return true;
+    }
 }

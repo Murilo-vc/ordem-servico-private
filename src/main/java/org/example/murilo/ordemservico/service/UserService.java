@@ -195,6 +195,10 @@ public class UserService {
 
             final User targetUser = new UserRepository(Database.connect()).findOneByUsername(targetUserUsername);
 
+            if (targetUser == null) {
+                throw new BaseException("Token inválido", OperationEnum.EDITAR_USUARIO);
+            }
+
             final UserRoleEnum newRole = UserRoleEnum.getById(newRoleString);
             if (user.getUsername().equals(targetUser.getUsername()) && !user.getRole().equals(newRole)) {
                 throw new BaseException("Os campos recebidos não são validos", OperationEnum.EDITAR_USUARIO);

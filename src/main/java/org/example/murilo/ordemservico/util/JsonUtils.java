@@ -46,6 +46,22 @@ public final class JsonUtils {
         return gson.fromJson(jsonString, UserListPayload.class);
     }
 
+    public static WorkOrderCreatePayload parseCreateWorkOrderPayload(final String jsonString) {
+        return new Gson().fromJson(jsonString, WorkOrderCreatePayload.class);
+    }
+
+    public static WorkOrderListPayload parseWorkOrderListPayload(final String jsonString) {
+        return new Gson().fromJson(jsonString, WorkOrderListPayload.class);
+    }
+
+    public static WorkOrderUpdatePayload parseUpdateWorkOrderPayload(final String jsonString) {
+        return new Gson().fromJson(jsonString, WorkOrderUpdatePayload.class);
+    }
+
+    public static AlterWorkOrderPayload parseChangeWorkOrderStatusPayload(final String jsonString) {
+        return new Gson().fromJson(jsonString, AlterWorkOrderPayload.class);
+    }
+
     public static String getErrorJson(final ErrorDto error) {
         return new Gson().toJson(error);
     }

@@ -3,9 +3,9 @@ package org.example.murilo.ordemservico.handler.exception;
 import org.example.murilo.ordemservico.domain.constants.ErrorMessages;
 import org.example.murilo.ordemservico.enumeration.OperationEnum;
 
-public class UserNotFoundException extends BaseException {
+public class NotWorkOrderOwner extends BaseException {
 
-    public UserNotFoundException(final OperationEnum operation) {
-        super(ErrorMessages.USER_NOT_FOUND, operation);
+    public NotWorkOrderOwner(final OperationEnum operation) {
+        super(ErrorMessages.NOT_WORK_ORDER_OWNER, operation);
     }
 }

@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.example.murilo.ordemservico.domain.dto.*;
 import org.example.murilo.ordemservico.domain.payload.*;
-import org.example.murilo.ordemservico.enumeration.OperationEnum;
-import org.example.murilo.ordemservico.enumeration.ResponseStatusEnum;
-import org.example.murilo.ordemservico.enumeration.UserRoleEnum;
+import org.example.murilo.ordemservico.enumeration.*;
 import org.example.murilo.ordemservico.handler.exception.BaseException;
 import org.example.murilo.ordemservico.util.StringUtils;
 
@@ -456,6 +454,185 @@ public class ClientService {
             throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.EXCLUIR_USUARIO);
         } catch (IOException e) {
             throw new BaseException(e.getMessage(), OperationEnum.EXCLUIR_USUARIO);
+        }
+    }
+
+    public List<WorkOrderDto> findAllWorkOrders(final String token,
+                                                final WorkOrderFilterEnum filter) throws BaseException {
+        try {
+            if (StringUtils.isEmpty(token) || filter == null) {
+                return null;
+            }
+
+            final WorkOrderListPayload payload = new WorkOrderListPayload(filter.getId(), token);
+
+            final String payloadJson = new Gson().toJson(payload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia", OperationEnum.LISTAR_ORDENS);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.ERRO.equals(status)) {
+                final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+                String message = error.getMensagem();
+
+                if (StringUtils.isEmpty(message)) {
+                    message = "Um erro não mapeado ocorreu durante a operação!";
+                }
+
+                throw new BaseException(message, OperationEnum.LISTAR_ORDENS);
+            }
+
+            final WorkOrderListDto workOrderListDto = new Gson().fromJson(responseJson, WorkOrderListDto.class);
+            return workOrderListDto.getOrdens();
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.LISTAR_ORDENS);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.LISTAR_ORDENS);
+        }
+    }
+
+    public void createWorkOrder(final String token,
+                                final String description) throws BaseException {
+        try {
+            if (!StringUtils.isValidDescription(description)) {
+                return;
+            }
+
+            final WorkOrderCreatePayload payload = new WorkOrderCreatePayload(description, token);
+
+            final String payloadJson = new Gson().toJson(payload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia", OperationEnum.CADASTRAR_ORDEM);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.SUCESSO.equals(status)) {
+                System.out.println("Ordem criado com sucesso!");
+            } else {
+                final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+                String message = error.getMensagem();
+
+                if (StringUtils.isEmpty(message)) {
+                    message = "Um erro não mapeado ocorreu durante a operação!";
+                }
+
+                throw new BaseException(message, OperationEnum.CADASTRAR_ORDEM);
+            }
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.CADASTRAR_ORDEM);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.CADASTRAR_ORDEM);
+        }
+    }
+
+    public void updateWorkOrder(final String token, final Integer orderId, final String newDescription) throws BaseException {
+        try {
+            if (StringUtils.isEmpty(token) ||
+                orderId == null ||
+                !StringUtils.isValidDescription(newDescription)) {
+                return;
+            }
+
+            final WorkOrderUpdatePayload payload = new WorkOrderUpdatePayload(orderId, newDescription, token);
+
+            final String payloadJson = new Gson().toJson(payload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia", OperationEnum.EDITAR_ORDEM);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.SUCESSO.equals(status)) {
+                System.out.println("Ordem atualizada com sucesso!");
+                return;
+            }
+
+            final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+            String message = error.getMensagem();
+
+            if (StringUtils.isEmpty(message)) {
+                message = "Um erro não mapeado ocorreu durante a operação!";
+            }
+
+            throw new BaseException(message, OperationEnum.EDITAR_ORDEM);
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.EDITAR_ORDEM);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.EDITAR_ORDEM);
+        }
+    }
+
+    public void alterWorkOrder(final String token,
+                               final Integer orderId,
+                               final String newDescription,
+                               final WorkOrderStatusEnum newStatus) throws BaseException {
+        try {
+            if (StringUtils.isEmpty(token) ||
+                orderId == null ||
+                !StringUtils.isValidDescription(newDescription) ||
+                newStatus == null) {
+                return;
+            }
+
+            final AlterWorkOrderPayload payload = new AlterWorkOrderPayload(
+                orderId, newStatus.getId(), newDescription, token
+            );
+
+            final String payloadJson = new Gson().toJson(payload);
+            System.out.println("Cliente enviou: " + payloadJson);
+            out.println(payloadJson);
+
+            final String responseJson = in.readLine();
+            System.out.println("Servidor retornou: " + responseJson);
+
+            if (StringUtils.isEmpty(responseJson)) {
+                throw new BaseException("Servidor enviou resposta vazia", OperationEnum.ALTERAR_ORDEM);
+            }
+
+            final BaseResponseDto baseResponse = new Gson().fromJson(responseJson, BaseResponseDto.class);
+            final ResponseStatusEnum status = ResponseStatusEnum.getById(baseResponse.getStatus());
+
+            if (ResponseStatusEnum.SUCESSO.equals(status)) {
+                System.out.println("Ordem alterada com sucesso!");
+                return;
+            }
+
+            final ErrorDto error = new Gson().fromJson(responseJson, ErrorDto.class);
+            String message = error.getMensagem();
+
+            if (StringUtils.isEmpty(message)) {
+                message = "Um erro não mapeado ocorreu durante a operação!";
+            }
+
+            throw new BaseException(message, OperationEnum.ALTERAR_ORDEM);
+        } catch (JsonSyntaxException e) {
+            throw new BaseException("Resposta não pode ser convertida para JSON", OperationEnum.ALTERAR_ORDEM);
+        } catch (IOException e) {
+            throw new BaseException(e.getMessage(), OperationEnum.ALTERAR_ORDEM);
         }
     }
 }

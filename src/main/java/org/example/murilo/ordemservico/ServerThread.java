@@ -2,7 +2,6 @@ package org.example.murilo.ordemservico;
 
 import org.example.murilo.ordemservico.domain.dto.ClientDto;
 import org.example.murilo.ordemservico.service.OperationService;
-import org.example.murilo.ordemservico.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +21,6 @@ public class ServerThread implements Runnable {
         this.socket = socket;
         this.connectedClients = connectedClients;
         this.operationService = new OperationService();
-        run();
     }
 
     @Override
@@ -42,11 +40,6 @@ public class ServerThread implements Runnable {
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 System.out.println("Servidor recebeu: " + inputLine);
-
-                if (StringUtils.isEmpty(inputLine)) {
-                    out.println("");
-                    continue;
-                }
 
                 final String outputJson = this.operationService.processRequest(inputLine);
 
